@@ -1,24 +1,42 @@
-name: My First Pipeline
+name: Flask Build and Test
 
-# 1. When should this run?
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-# 2. What should it do?
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest # The type of robot/machine to use
+  build:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4 # This copies your code to the robot
+      # 1. Pull the code from GitHub onto the runner
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Python
+      # 2. Install the exact Python version your teammate is using
+      - name: Set up Python 3.13
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.13'
 
-      - name: Install Dependencies
-        run: pip install -r requirements.txt || echo "No requirements found"
+      # 3. Install the "Ingredients" (The list you just sent me)
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Run my App
-        run: python hello.py
+      # 4. Linting (Optional but recommended)
+      # This checks if the code has obvious syntax errors
+      - name: Check Syntax
+        run: python -m compileall .
+
+      # 5. The "Smoke Test"
+      # This starts the Flask app, waits 5 seconds, then shuts it down.
+      # If it crashes in those 5 seconds, the pipeline fails.
+      - name: Verify App Starts
+        run: |
+          python app.py & 
+          sleep 5
+          kill $! || echo "App already closed or failed to start"
